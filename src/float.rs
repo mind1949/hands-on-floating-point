@@ -71,11 +71,12 @@ impl Add for Float {
             mantissa >>= 1;
             output.exp += 1;
         }
-        while mantissa <= DEFAULT_MANTISSA >> 1 {
+        while mantissa <= DEFAULT_MANTISSA {
             mantissa <<= 1;
             output.exp -= 1;
         }
 
+        // 隐藏默认值
         output.mantissa = mantissa - DEFAULT_MANTISSA;
 
         let parts = output;
@@ -99,7 +100,7 @@ impl Neg for Float {
     fn neg(self) -> Self::Output {
         let float: f64 = -unsafe { transmute(self.bits) };
         let bits = (!self.bits >> 63 << 63) + (self.bits << 1 >> 1);
-        let parts = self.parts;
+        let parts = -self.parts;
 
         Self { float, bits, parts }
     }
@@ -133,7 +134,17 @@ mod test_float {
             let fl = Float::new(l);
             let fr = Float::new(r);
 
-            assert_eq!(fl + fr, Float::new(l + r))
+            assert_eq!(fl + fr, Float::new(((l + r) * 10000.0).floor() / 10000.0,),);
+        }
+    }
+
+    #[test]
+    fn test_sub() {
+        for (l, r) in [(0.0475, 0.0006), (0.1, 0.2), (-0.1, 0.2)] {
+            let fl = Float::new(l);
+            let fr = Float::new(r);
+
+            assert_eq!(fl - fr, Float::new(l - r,),)
         }
     }
 }

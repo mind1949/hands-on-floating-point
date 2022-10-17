@@ -66,7 +66,7 @@ impl Add for Float {
         }
 
         // 结果规格化
-        if mantissa >= (DEFAULT_MANTISSA << 1) {
+        while mantissa >= (DEFAULT_MANTISSA << 1) {
             // FIXME: 右移有精度损失
             mantissa >>= 1;
             output.exp += 1;
@@ -134,7 +134,11 @@ mod test_float {
             let fl = Float::new(l);
             let fr = Float::new(r);
 
-            assert_eq!(fl + fr, Float::new(((l + r) * 10000.0).floor() / 10000.0,),);
+            println!("---\t---\t---\t---\t---\t---");
+            println!("[f64]\t{}\t+\t{}\t=\t{}", l, r, l+r);
+            println!("[Float]\t{}\t+\t{}\t=\t{}", fl, fr, fl+fr);
+
+            assert_eq!(rounding((fl+fr).f64()), rounding(l+r))
         }
     }
 
@@ -144,7 +148,15 @@ mod test_float {
             let fl = Float::new(l);
             let fr = Float::new(r);
 
-            assert_eq!(fl - fr, Float::new(l - r,),)
+            println!("---\t---\t---\t---\t---\t---");
+            println!("[f64]\t{}\t-\t{}\t=\t{}", l, r, l-r);
+            println!("[Float]\t{}\t-\t{}\t=\t{}", fl, fr, fl+-fr);
+
+            assert_eq!(rounding((fl-fr).f64()), rounding(l-r))
         }
+    }
+
+    fn rounding(f: f64) -> f64 {
+        (f*10000.0+0.5).floor()/10000.0
     }
 }

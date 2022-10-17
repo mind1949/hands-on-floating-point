@@ -1,4 +1,5 @@
 use std::ops::Neg;
+use std::fmt::{Debug};
 
 /// 浮点数位模式的三个部分
 #[derive(Debug, Clone, Copy)]
@@ -73,7 +74,6 @@ impl Neg for Parts {
 #[cfg(test)]
 mod parts_test {
     use super::Parts;
-    use std::mem::transmute;
 
     #[test]
     fn test_parts_decode() {

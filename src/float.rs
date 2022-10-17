@@ -2,7 +2,6 @@ use super::parts::Parts;
 
 use core::cmp::PartialEq;
 use std::fmt::{self, Debug, Display};
-use std::mem::transmute;
 use std::ops::{Add, Neg, Sub};
 
 /// 实现64位浮点数
@@ -26,7 +25,7 @@ pub struct Float {
 
 impl Float {
     pub fn new(float: f64) -> Self {
-        let bits = unsafe { transmute(float) };
+        let bits = float.to_bits();
         let parts = Parts::new(bits);
 
         Self { float, bits, parts }
@@ -43,9 +42,7 @@ impl Add for Float {
     fn add(self, other: Self) -> Self::Output {
         let (mut l, mut r) = (self.parts, other.parts);
         if l.exp < r.exp || (l.exp == r.exp && l.mantissa < r.mantissa) {
-            let m = l;
-            l = r;
-            r = m;
+            std::mem::swap(&mut l, &mut r)
         }
         let (l, r) = (l, r);
 
@@ -71,7 +68,7 @@ impl Add for Float {
             mantissa >>= 1;
             output.exp += 1;
         }
-        while mantissa <= DEFAULT_MANTISSA {
+        while mantissa < DEFAULT_MANTISSA {
             mantissa <<= 1;
             output.exp -= 1;
         }
@@ -98,7 +95,7 @@ impl Neg for Float {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        let float: f64 = -unsafe { transmute(self.bits) };
+        let float: f64 = -f64::from_bits(self.bits);
         let bits = (!self.bits >> 63 << 63) + (self.bits << 1 >> 1);
         let parts = -self.parts;
 
@@ -135,10 +132,10 @@ mod test_float {
             let fr = Float::new(r);
 
             println!("---\t---\t---\t---\t---\t---");
-            println!("[f64]\t{}\t+\t{}\t=\t{}", l, r, l+r);
-            println!("[Float]\t{}\t+\t{}\t=\t{}", fl, fr, fl+fr);
+            println!("[f64]\t{}\t+\t{}\t=\t{}", l, r, l + r);
+            println!("[Float]\t{}\t+\t{}\t=\t{}", fl, fr, fl + fr);
 
-            assert_eq!(rounding((fl+fr).f64()), rounding(l+r))
+            assert_eq!(rounding((fl + fr).f64()), rounding(l + r))
         }
     }
 
@@ -149,14 +146,14 @@ mod test_float {
             let fr = Float::new(r);
 
             println!("---\t---\t---\t---\t---\t---");
-            println!("[f64]\t{}\t-\t{}\t=\t{}", l, r, l-r);
-            println!("[Float]\t{}\t-\t{}\t=\t{}", fl, fr, fl+-fr);
+            println!("[f64]\t{}\t-\t{}\t=\t{}", l, r, l - r);
+            println!("[Float]\t{}\t-\t{}\t=\t{}", fl, fr, fl + -fr);
 
-            assert_eq!(rounding((fl-fr).f64()), rounding(l-r))
+            assert_eq!(rounding((fl - fr).f64()), rounding(l - r))
         }
     }
 
     fn rounding(f: f64) -> f64 {
-        (f*10000.0+0.5).floor()/10000.0
+        (f * 10000.0 + 0.5).floor() / 10000.0
     }
 }

@@ -1,5 +1,5 @@
+use std::fmt::Debug;
 use std::ops::Neg;
-use std::fmt::{Debug};
 
 /// 浮点数位模式的三个部分
 #[derive(Debug, Clone, Copy)]
